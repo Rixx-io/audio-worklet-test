@@ -23,13 +23,14 @@ let audioContext
 async function initAudio () {
     if (audioContext) throw new Error('audio context already inited')
 
-    audioContext = new AudioContext()
+    // Always call getUserMedia even if not using mic input, or else oscillator doesn't work either
+    const inputStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
 
+    audioContext = new AudioContext()
 
     let inputGainNode
     if (micCheckbox.checked) {
         console.log('creating mic input node')
-        const inputStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         const inputNode = new MediaStreamAudioSourceNode(audioContext, { mediaStream: inputStream })
         inputGainNode = new GainNode(audioContext, { gain: parseFloat(inputGain.value) })
         inputNode.connect(inputGainNode)
