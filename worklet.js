@@ -8,20 +8,16 @@ class PeakMeter extends AudioWorkletProcessor {
   process (inputs, outputs, parameters) {
     const input = inputs[0]
     const output = outputs[0]
-    if (!input || !output) return false
 
-    const inCh = input[0]
-    if (!inCh) return false
+    // bypass audio
+    for (let channel = 0; channel < output.length; ++channel) {
+      output[channel].set(input[channel]);
+    }
 
-    output.forEach(outCh => {
-      for (let i = 0; i < outCh.length; i++) {
-        outCh[i] = inCh[i]
-        if (Math.abs(inCh[i]) > this.peak) {
-          this.peak = Math.abs(inCh[i])
-        }
-      }
-    })
+    // find peak
+    this.peak = Math.max(this.peak, ...input[0].map(s => Math.abs(s)))
 
+    // periodically report peak
     if (currentTime - this.lastTime > MESSAGE_INTERVAL) {
       this.port.postMessage(this.peak)
       this.peak = 0

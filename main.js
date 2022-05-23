@@ -10,10 +10,14 @@ const peakMeter = document.getElementById('peak-meter')
 
 initButton.addEventListener('click', event => {
     event.preventDefault()
+    initButton.disabled = true
+    closeButton.disabled = false
     initAudio()
 })
 closeButton.addEventListener('click', event => {
     event.preventDefault()
+    initButton.disabled = false
+    closeButton.disabled = true
     audioContext.close()
     audioContext = null
 })
@@ -23,14 +27,14 @@ let audioContext
 async function initAudio () {
     if (audioContext) throw new Error('audio context already inited')
 
-    // Always call getUserMedia even if not using mic input, or else oscillator doesn't work either
-    const inputStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-
     audioContext = new AudioContext()
+    audioContext.suspend()
 
     let inputGainNode
     if (micCheckbox.checked) {
         console.log('creating mic input node')
+        // Always call getUserMedia even if not using mic input, or else oscillator doesn't work either
+        const inputStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         const inputNode = new MediaStreamAudioSourceNode(audioContext, { mediaStream: inputStream })
         inputGainNode = new GainNode(audioContext, { gain: parseFloat(inputGain.value) })
         inputNode.connect(inputGainNode)
@@ -71,4 +75,6 @@ async function initAudio () {
     oscillatorGain.addEventListener('input', () => { oscillatorGainNode.gain.value = parseFloat(oscillatorGain.value) })
     oscillatorNode.connect(oscillatorGainNode).connect(peakMeterNode)
     oscillatorNode.start()
+
+    audioContext.resume()
 }
